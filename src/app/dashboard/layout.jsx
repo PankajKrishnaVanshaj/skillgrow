@@ -6,7 +6,11 @@ const DashboardLayout = ({ children }) => {
   const path = usePathname();
 
   // Render the layout only for the exact /dashboard/quiz or /dashboard paths
-  if (path === "/dashboard/quiz" || path === "/dashboard") {
+  if (
+    path === "/dashboard/quiz" ||
+    path === "/dashboard/course" ||
+    path === "/dashboard"
+  ) {
     return (
       <div className="h-screen flex mx-3">
         <SideNav />

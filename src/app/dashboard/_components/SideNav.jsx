@@ -1,5 +1,11 @@
 "use client";
-import { FileClock, Home, Settings, WalletCards } from "lucide-react";
+import {
+  FileClock,
+  Home,
+  GraduationCap,
+  Settings,
+  WalletCards,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -17,6 +23,11 @@ const SideNav = () => {
       name: "Quiz",
       icon: FileClock,
       path: "/dashboard/quiz",
+    },
+    {
+      name: "Course",
+      icon: GraduationCap,
+      path: "/dashboard/course",
     },
     // {
     //   name: "Billing",

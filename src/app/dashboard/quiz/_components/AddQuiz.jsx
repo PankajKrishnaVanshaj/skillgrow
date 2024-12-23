@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { chatSession } from "@/utils/GeminiAIModal";
+import { chatSession } from "@/utils/QuizGeminiAIModal";
 import axios from "axios";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
