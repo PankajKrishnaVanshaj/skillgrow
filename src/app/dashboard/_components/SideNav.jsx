@@ -24,11 +24,11 @@ const SideNav = () => {
       icon: FileClock,
       path: "/dashboard/quiz",
     },
-    {
-      name: "Course",
-      icon: GraduationCap,
-      path: "/dashboard/course",
-    },
+    // {
+    //   name: "Course",
+    //   icon: GraduationCap,
+    //   path: "/dashboard/course",
+    // },
     // {
     //   name: "Billing",
     //   icon: WalletCards,
