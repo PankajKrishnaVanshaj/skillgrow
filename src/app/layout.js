@@ -17,6 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata = {
+  manifest: "/manifest.json",
   title:
     "PK SkillGrow - Enhance Your Knowledge with AI-Driven Quizzes & Courses",
   description:

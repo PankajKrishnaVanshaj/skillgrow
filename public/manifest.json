@@ -1,0 +1,27 @@
+{
+  "theme_color": "#3884ff",
+  "background_color": "#f9ab24",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "icon512_maskable.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "icon512_rounded.png",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "any",
+  "display": "standalone",
+  "dir": "auto",
+  "lang": "en-GB",
+  "name": "PK SkillGrow",
+  "short_name": "PK SkillGrow",
+  "start_url": "/",
+  "scope": "/",
+  "description": "PK SkillGrow is an AI-powered platform that helps users enhance their knowledge through interactive quizzes, personalized courses, and educational resources."
+}
