@@ -14,24 +14,45 @@ export const authOptions = {
       if (account.provider === "google") {
         const { name, email } = user;
         await connectToDatabase();
+
         try {
-          const userExists = await UserModel.findOne({ email });
-          if (userExists) {
-            return userExists;
+          let existingUser = await UserModel.findOne({ email });
+
+          if (existingUser) {
+            return true;
           }
+          const defaultUsername = email.split("@")[0];
 
-          const user = await UserModel.create({
-            email: email,
-            name: name,
+          const newUser = await UserModel.create({
+            email,
+            name,
+            username: defaultUsername,
           });
-
-          return user;
+          return true;
         } catch (error) {
-          console.log(error);
+          console.error("Error during sign in:", error);
+          return false; // Return false to indicate sign-in failure
         }
       }
+      return true; // Default to true for other providers
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        const dbUser = await UserModel.findOne({ email: user.email });
+        token.id = dbUser._id;
+        token.email = dbUser.email;
+        token.name = dbUser.name;
+        token.username = dbUser.username;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.id = token.id;
+      session.user.email = token.email;
+      session.user.name = token.name;
+      session.user.username = token.username;
 
-      return user;
+      return session;
     },
   },
 };
