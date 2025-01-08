@@ -10,6 +10,8 @@ const QuizList = () => {
   const router = useRouter();
 
   const [quizList, setQuizList] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [quizzesPerPage] = useState(6); // Display 6 quizzes per page
 
   useEffect(() => {
     const GetQuizList = async () => {
@@ -21,7 +23,7 @@ const QuizList = () => {
         );
         setQuizList(sortedQuizList);
       } catch (error) {
-        console.error("Error fetching history from database:", error);
+        console.error("Error fetching quizzes from database:", error);
       }
     };
 
@@ -34,9 +36,7 @@ const QuizList = () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this quiz?"
     );
-    if (!confirmed) {
-      return; // Exit the function if the user cancels the action
-    }
+    if (!confirmed) return;
 
     try {
       await axios.delete(`/api/quiz/${quizId}`);
@@ -50,43 +50,80 @@ const QuizList = () => {
     router.push(`/dashboard/quiz/${quizId}`);
   };
 
+  // Pagination logic
+  const indexOfLastQuiz = currentPage * quizzesPerPage;
+  const indexOfFirstQuiz = indexOfLastQuiz - quizzesPerPage;
+  const currentQuizzes = quizList.slice(indexOfFirstQuiz, indexOfLastQuiz);
+
+  const totalPages = Math.ceil(quizList.length / quizzesPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="p-4">
       <h2 className="font-semibold text-3xl mb-6 text-center text-gray-800">
         Previous Quiz List
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 capitalize">
-        {quizList.map((quiz) => (
-          <div
-            key={quiz._id}
-            className="p-5 border rounded-xl shadow-md hover:shadow-lg transform transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-indigo-100 to-white"
-          >
-            <h3 className="text-2xl font-bold text-indigo-700 mb-2 line-clamp-1">
-              {quiz.topic}
-            </h3>
-            <p className="text-sm text-gray-600 mb-1">
-              Created At: {new Date(quiz.createdAt).toLocaleDateString()}
-            </p>
-            <p className="text-sm text-gray-600 mb-4 line-clamp-1">
-              Title: <span className="font-semibold">{quiz.title}</span>
-            </p>
-            <div className="flex justify-between mt-4">
-              <button
-                onClick={() => handlePlay(quiz._id)}
-                className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300"
+
+      {quizList.length === 0 ? (
+        <p className="text-center text-gray-600">
+          You have not generated any quizzes yet.
+        </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 capitalize">
+            {currentQuizzes.map((quiz) => (
+              <div
+                key={quiz._id}
+                className="p-5 border rounded-xl shadow-md hover:shadow-lg transform transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-indigo-100 to-white"
               >
-                Play
-              </button>
-              <button
-                onClick={() => handleDelete(quiz._id)}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300"
-              >
-                Delete
-              </button>
-            </div>
+                <h3 className="text-2xl font-bold text-indigo-700 mb-2 line-clamp-1">
+                  {quiz.topic}
+                </h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  Created At: {new Date(quiz.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-gray-600 mb-4 line-clamp-1">
+                  Title: <span className="font-semibold">{quiz.title}</span>
+                </p>
+                <div className="flex justify-between mt-4">
+                  <button
+                    onClick={() => handlePlay(quiz._id)}
+                    className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300"
+                  >
+                    Play
+                  </button>
+                  <button
+                    onClick={() => handleDelete(quiz._id)}
+                    className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-6">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => handlePageChange(index + 1)}
+                className={`mx-1 px-3 py-1 rounded-full font-semibold ${
+                  currentPage === index + 1
+                    ? "bg-indigo-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
