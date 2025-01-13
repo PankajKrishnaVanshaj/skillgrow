@@ -12,9 +12,11 @@ const DashboardLayout = ({ children }) => {
     path === "/dashboard"
   ) {
     return (
-      <div className="h-screen flex mx-3">
-        <SideNav />
-        <div className="flex-grow p-3">{children}</div>
+      <div className="h-screen flex mx-2">
+        <div className="hidden md:block">
+          <SideNav />
+        </div>
+        <div className="flex-grow px-1">{children}</div>
       </div>
     );
   }

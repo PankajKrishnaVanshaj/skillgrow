@@ -21,7 +21,7 @@ const Dashboard = () => {
       </div>
 
       {/* Quiz List */}
-      <div className="container mx-auto">
+      <div className="">
         <QuizList />
       </div>
     </div>

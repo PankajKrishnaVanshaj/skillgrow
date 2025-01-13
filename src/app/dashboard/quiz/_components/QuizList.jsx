@@ -62,7 +62,7 @@ const QuizList = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="px-0.5">
       <h2 className="font-semibold text-3xl mb-6 text-center text-gray-800">
         Previous Quiz List
       </h2>
@@ -73,7 +73,7 @@ const QuizList = () => {
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 capitalize">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 capitalize">
             {currentQuizzes.map((quiz) => (
               <div
                 key={quiz._id}
