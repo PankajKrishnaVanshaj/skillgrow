@@ -163,6 +163,7 @@ const AddQuiz = () => {
                   }
                 }}
                 required
+                min={1}
                 max={20}
                 className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
