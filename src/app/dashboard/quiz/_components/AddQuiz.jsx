@@ -156,8 +156,14 @@ const AddQuiz = () => {
                 id="number"
                 type="number"
                 value={number}
-                onChange={(e) => setNumber(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  if (newValue <= 20) {
+                    setNumber(newValue);
+                  }
+                }}
                 required
+                max={20}
                 className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
