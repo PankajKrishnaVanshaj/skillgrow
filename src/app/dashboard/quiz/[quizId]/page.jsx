@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import QuizResult from "../_components/QuizResult";
 import { useRouter } from "next/navigation";
-import ShareButton from "@/components/ShareButton";
+import { ShareButton } from "@/components/ShareButton";
 
 const QuizPlay = ({ params }) => {
   const router = useRouter();
@@ -102,7 +102,7 @@ const QuizPlay = ({ params }) => {
             >
               Back
             </div>
-            <ShareButton url={window.location.href} />
+            <ShareButton url={params.quizId} />
             <button
               onClick={handleSkipQuestion}
               className="text-black font-bold py-2 px-4 rounded-full shadow-md transition duration-300"

@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { ShareButton } from "@/components/ShareButton";
 
 const QuizList = () => {
   const { data } = useSession();
@@ -95,6 +96,8 @@ const QuizList = () => {
                   >
                     Play
                   </button>
+                  <ShareButton url={quiz._id} />
+
                   <button
                     onClick={() => handleDelete(quiz._id)}
                     className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300"
