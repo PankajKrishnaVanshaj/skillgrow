@@ -18,31 +18,44 @@ const geistMono = localFont({
 
 export const metadata = {
   manifest: "/manifest.json",
-  title:
-    "PK SkillGrow - Enhance Your Knowledge with AI-Driven Quizzes & Courses",
+  title: "PK SkillGrow - Elevate Your Knowledge with AI-Powered Learning",
   description:
-    "PK SkillGrow is an AI-powered platform that helps users enhance their knowledge through interactive quizzes, personalized courses, and educational resources.",
+    "PK SkillGrow is an AI-driven platform offering interactive quizzes, tailored courses, and educational resources to help you advance your skills and knowledge.",
   keywords:
-    "PK SkillGrow, AI knowledge platform, generate quizzes, interactive courses, skill enhancement, AI-powered learning, education, quiz generator, course generator, knowledge boost",
+    "PK SkillGrow, AI learning platform, interactive quizzes, personalized courses, skill development, AI education, knowledge enhancement, online learning, education technology, AI-powered quizzes, course generator",
 
   // Open Graph metadata
   openGraph: {
-    title:
-      "PK SkillGrow - Enhance Your Knowledge with AI-Driven Quizzes & Courses",
+    title: "PK SkillGrow - Elevate Your Knowledge with AI-Powered Learning",
     description:
-      "Discover PK SkillGrow, an AI-powered platform designed to help you enhance your knowledge through interactive quizzes and customized courses.",
-    url: "http://skillgrow.pankri.com",
+      "Join PK SkillGrow and unlock the power of AI to improve your knowledge with engaging quizzes and personalized courses tailored to your needs.",
+    url: "https://skillgrow.pankri.com",
     type: "website",
     images: [
       {
         url: "/skillgrow.png",
         width: 1200,
         height: 630,
-        alt: "PK SkillGrow Platform",
+        alt: "PK SkillGrow Platform - AI-Driven Learning",
       },
     ],
   },
+
+  // Twitter Card metadata
+  twitter: {
+    card: "summary_large_image",
+    title: "PK SkillGrow - Elevate Your Knowledge with AI-Powered Learning",
+    description:
+      "Explore PK SkillGrow, an innovative platform designed to boost your skills through AI-powered interactive quizzes and tailored educational courses.",
+    images: ["/skillgrow.png"],
+  },
+
+  // Additional metadata
+  author: "PK SkillGrow Team",
+  themeColor: "#1D4ED8", // Tailwind Blue for consistency with the branding
+  canonical: "https://skillgrow.pankri.com",
 };
+
 
 export default function RootLayout({ children }) {
   return (
