@@ -7,12 +7,24 @@ export default function Home() {
       <main className="flex-grow bg-white py-16">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-blue-500 to-orange-500 text-transparent bg-clip-text">
+            <span
+              className="bg-gradient-to-r from-blue-500 to-orange-500 text-transparent bg-clip-text"
+              style={{
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               PK SkillGrow
             </span>
           </h2>
           <p className="text-xl md:text-2xl mb-6">
-            <span className="bg-gradient-to-r from-blue-400 to-blue-600 text-transparent bg-clip-text">
+            <span
+              className="bg-gradient-to-r from-blue-400 to-blue-600 text-transparent bg-clip-text"
+              style={{
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               Learn 10x Faster With AI
             </span>
           </p>

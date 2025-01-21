@@ -28,7 +28,13 @@ const Header = () => {
             height={50}
             // className="rounded-full"
           />
-          <span className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-br from-orange-500 via-blue-400 to-red-600">
+          <span
+            className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-br from-orange-500 via-blue-400 to-red-600"
+            style={{
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
             PK SkillGrow
           </span>
         </div>
