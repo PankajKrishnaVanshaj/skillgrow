@@ -23,8 +23,6 @@ export const metadata = {
     "PK SkillGrow is an AI-driven platform offering interactive quizzes, tailored courses, and educational resources to help you advance your skills and knowledge.",
   keywords:
     "PK SkillGrow, AI learning platform, interactive quizzes, personalized courses, skill development, AI education, knowledge enhancement, online learning, education technology, AI-powered quizzes, course generator",
-
-  // Open Graph metadata
   openGraph: {
     title: "PK SkillGrow - Elevate Your Knowledge with AI-Powered Learning",
     description:
@@ -33,33 +31,63 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/skillgrow.png",
+        url: "https://skillgrow.pankri.com/skillgrow.png", // Absolute URL
         width: 1200,
-        height: 630,
+        height: 630, // 1.9:1 ratio; consider 1000x1500 for Pinterest
         alt: "PK SkillGrow Platform - AI-Driven Learning",
       },
     ],
   },
-
-  // Twitter Card metadata
   twitter: {
     card: "summary_large_image",
     title: "PK SkillGrow - Elevate Your Knowledge with AI-Powered Learning",
     description:
       "Explore PK SkillGrow, an innovative platform designed to boost your skills through AI-powered interactive quizzes and tailored educational courses.",
-    images: ["/skillgrow.png"],
+    images: ["https://skillgrow.pankri.com/skillgrow.png"], // Absolute URL
   },
-
-  // Additional metadata
   author: "PK SkillGrow Team",
-  themeColor: "#1D4ED8", // Tailwind Blue for consistency with the branding
+  themeColor: "#1D4ED8",
   canonical: "https://skillgrow.pankri.com",
 };
 
-
 export default function RootLayout({ children }) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "PK SkillGrow",
+    applicationCategory: "EducationApplication", // Updated to reflect learning focus
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0", // Adjust if there's a price
+      priceCurrency: "USD",
+    },
+    description:
+      "PK SkillGrow is an AI-driven platform offering interactive quizzes, tailored courses, and educational resources to enhance your skills and knowledge.",
+    url: "https://skillgrow.pankri.com",
+    image: "https://skillgrow.pankri.com/skillgrow.png",
+    publisher: {
+      "@type": "Organization",
+      name: "PK SkillGrow Team",
+      url: "https://skillgrow.pankri.com",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.5", // Placeholder; replace with real data
+      reviewCount: "100", // Placeholder; replace with real data
+      bestRating: "5",
+      worstRating: "1",
+    },
+  };
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
