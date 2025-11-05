@@ -8,6 +8,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { chatSession } from "@/utils/QuizGeminiAIModal";
 import axios from "axios";
 import { LoaderCircle } from "lucide-react";
@@ -17,12 +25,16 @@ import { useState } from "react";
 const Difficulty = { EASY: "Easy", MEDIUM: "Medium", HARD: "Hard" };
 const Language = ["English", "Hindi"];
 
+// Generate 1 to 20 options
+const QuestionCountOptions = Array.from({ length: 20 }, (_, i) => i + 1);
+
 const AddQuiz = () => {
   const router = useRouter();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [className, setClassName] = useState("");
+
+  const [examOrClass, setExamOrClass] = useState("");
   const [subject, setSubject] = useState("");
   const [chapter, setChapter] = useState("");
   const [difficulty, setDifficulty] = useState(Difficulty.EASY);
@@ -35,52 +47,46 @@ const AddQuiz = () => {
     setError(null);
     setLoading(true);
 
-    // Auto-generate title
-    const title = `${subject} - ${chapter} (Class ${className})`;
+    const title = `${examOrClass} – ${subject} – ${chapter}`;
 
-    // Optimized prompt: concise, structured, schema-enforced
-    const inputPrompt = `Generate exactly ${number} multiple-choice questions for Class ${className}, Subject: ${subject}, Chapter: ${chapter}. 
-Difficulty: ${difficulty}. Language: ${language}.
+    const inputPrompt = `Generate **exactly ${number}** multiple-choice questions for:
 
-Return valid JSON only (no markdown):
+- Exam / Class: ${examOrClass}
+- Subject: ${subject}
+- Topic / Chapter: ${chapter}
+- Difficulty: ${difficulty}
+- Language: ${language}
+
+Return **only** a valid JSON array (no markdown, no extra text):
+
 [
   {
     "question": "string",
-    "options": ["option1", "option2", "option3", "option4"],
-    "answer": "correct_option_text"
+    "options": ["opt1","opt2","opt3","opt4"],
+    "answer": "exact matching option text"
   }
 ]
 
-Ensure:
-- Questions are educational and accurate.
-- Exactly 4 unique options.
-- Answer must match one option exactly.
-- No extra text or explanation.`;
+Rules:
+- 4 unique options per question.
+- Answer must be **identical** to one of the options.
+- No explanations, no extra characters.`;
 
     try {
       const result = await chatSession.sendMessage(inputPrompt);
-      let rawText = await result.response.text();
+      const raw = await result.response.text();
 
-      // Clean JSON
-      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new Error("Invalid JSON format from AI");
-      const quizJson = jsonMatch[0];
-      let questions;
-      try {
-        questions = JSON.parse(quizJson);
-      } catch (parseErr) {
-        throw new Error("Failed to parse AI response as JSON");
-      }
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error("AI returned no JSON array");
 
-      if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error("No valid questions generated");
-      }
+      const questions = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(questions) || questions.length === 0)
+        throw new Error("Empty question list");
 
-      // Send to backend
-      const response = await axios.post("/api/quiz", {
+      const resp = await axios.post("/api/quiz", {
         questions: JSON.stringify(questions),
         title,
-        className,
+        examOrClass,
         subject,
         chapter,
         difficulty,
@@ -88,15 +94,15 @@ Ensure:
         number,
       });
 
-      if (response.data.success) {
+      if (resp.data.success) {
         setOpenDialog(false);
-        router.push(`/dashboard/quiz/${response.data.data._id}`);
+        router.push(`/dashboard/quiz/${resp.data.data._id}`);
       } else {
-        setError(response.data.error || "Failed to save quiz");
+        setError(resp.data.error ?? "Failed to save quiz");
       }
     } catch (err) {
-      console.error("Quiz generation error:", err);
-      setError(err.message || "Failed to generate quiz. Try again.");
+      console.error(err);
+      setError(err.message ?? "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -110,123 +116,123 @@ Ensure:
 
   return (
     <div>
+      {/* Trigger Card */}
       <div
-        className="p-10 border rounded-lg bg-secondary hover:scale-105 hover:shadow-md cursor-pointer transition-all border-dashed"
+        className="p-10 border-2 border-dashed rounded-xl bg-secondary hover:scale-105 hover:shadow-lg cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center"
         onClick={() => setOpenDialog(true)}
       >
-        <h2 className="text-lg text-center">+ Add New Quiz</h2>
+        <div className="text-3xl mb-2">+</div>
+        <h2 className="text-lg font-medium">Add New Quiz</h2>
       </div>
 
+      {/* Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Create New Quiz</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              Create New Quiz
+            </DialogTitle>
             <DialogDescription>
-              Fill in the details to generate a custom quiz.
+              Fill the details – any class or competitive exam works.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="class" className="block text-sm font-medium">
-                  Class
-                </label>
-                <Input
-                  id="class"
-                  placeholder="e.g., 10th"
-                  value={className}
-                  onChange={(e) => setClassName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="subject" className="block text-sm font-medium">
-                  Subject
-                </label>
-                <Input
-                  id="subject"
-                  placeholder="e.g., Physics"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  required
-                />
-              </div>
+          <form onSubmit={onSubmit} className="space-y-5">
+            {/* Exam / Class */}
+            <div>
+              <Label htmlFor="examOrClass">Exam / Class *</Label>
+              <Input
+                id="examOrClass"
+                placeholder="e.g. 10th, UPSC, SSC CGL, CTET, JEE"
+                value={examOrClass}
+                onChange={(e) => setExamOrClass(e.target.value)}
+                required
+              />
             </div>
 
+            {/* Subject */}
             <div>
-              <label htmlFor="chapter" className="block text-sm font-medium">
-                Topic / Chapter
-              </label>
+              <Label htmlFor="subject">Subject *</Label>
+              <Input
+                id="subject"
+                placeholder="e.g. Physics, History, GK"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Chapter */}
+            <div>
+              <Label htmlFor="chapter">Topic / Chapter *</Label>
               <Input
                 id="chapter"
-                placeholder="e.g., Laws of Motion"
+                placeholder="e.g. Laws of Motion, Indian Polity"
                 value={chapter}
                 onChange={(e) => setChapter(e.target.value)}
                 required
               />
             </div>
 
+            {/* Difficulty, Language, Number */}
             <div className="grid grid-cols-3 gap-4">
+              {/* Difficulty */}
               <div>
-                <label
-                  htmlFor="difficulty"
-                  className="block text-sm font-medium"
-                >
-                  Difficulty
-                </label>
-                <select
-                  id="difficulty"
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={Difficulty.EASY}>Easy</option>
-                  <option value={Difficulty.MEDIUM}>Medium</option>
-                  <option value={Difficulty.HARD}>Hard</option>
-                </select>
+                <Label htmlFor="difficulty">Difficulty</Label>
+                <Select value={difficulty} onValueChange={setDifficulty}>
+                  <SelectTrigger id="difficulty">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Difficulty.EASY}>Easy</SelectItem>
+                    <SelectItem value={Difficulty.MEDIUM}>Medium</SelectItem>
+                    <SelectItem value={Difficulty.HARD}>Hard</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Language */}
               <div>
-                <label htmlFor="language" className="block text-sm font-medium">
-                  Language
-                </label>
-                <select
-                  id="language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  {Language.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
+                <Label htmlFor="language">Language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Language.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Number of Questions – NOW A SELECT */}
               <div>
-                <label htmlFor="number" className="block text-sm font-medium">
-                  Questions
-                </label>
-                <Input
-                  id="number"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={number}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    if (val >= 1 && val <= 20) setNumber(val);
-                  }}
-                  required
-                />
+                <Label htmlFor="number">Questions</Label>
+                <Select
+                  value={number.toString()}
+                  onValueChange={(val) => setNumber(parseInt(val))}
+                >
+                  <SelectTrigger id="number">
+                    <SelectValue placeholder="Select count" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QuestionCountOptions.map((n) => (
+                      <SelectItem key={n} value={n.toString()}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
+            {/* Error */}
             {error && <p className="text-sm text-red-600">{error}</p>}
 
+            {/* Buttons */}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
@@ -235,7 +241,7 @@ Ensure:
                 {loading ? (
                   <>
                     <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
+                    Generating…
                   </>
                 ) : (
                   "Create Quiz"

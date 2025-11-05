@@ -28,18 +28,20 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="relative flex-shrink-0">
             <Image
               src="/skillgrow.png"
               alt="PK SkillGrow Logo"
-              width={48}
-              height={48}
-              className="rounded-full shadow-md transition-transform group-hover:scale-110"
+              width={40}
+              height={40}
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full shadow-md transition-transform group-hover:scale-110"
             />
-            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 animate-pulse" />
+            <Sparkles className="absolute -top-1 -right-1 w-3.5 h-3.5 md:w-4 md:h-4 text-yellow-400 animate-pulse" />
           </div>
-          <span className="hidden sm:block font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-purple-600 to-blue-600">
+
+          {/* Responsive text: smaller on mobile, larger on md+ */}
+          <span className="font-extrabold text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-purple-600 to-blue-600 leading-tight">
             PK SkillGrow
           </span>
         </Link>

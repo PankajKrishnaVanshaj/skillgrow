@@ -91,7 +91,7 @@ export async function POST(req) {
     const {
       questions: questionsJson,
       title: providedTitle,
-      className,
+      examOrClass,
       subject,
       chapter,
       difficulty,
@@ -100,7 +100,7 @@ export async function POST(req) {
     } = body;
 
     // Validate required fields
-    if (!className || !subject || !chapter || !difficulty || !number || !questionsJson) {
+    if (!examOrClass || !subject || !chapter || !difficulty || !number || !questionsJson) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -125,11 +125,11 @@ export async function POST(req) {
     }
 
     // Auto-generate title if not provided
-    const title = providedTitle?.trim() || `${subject} - ${chapter} (Class ${className})`;
+    const title = providedTitle?.trim() || `${subject} - ${chapter} (Class ${examOrClass})`;
 
     const quizData = {
       title,
-      className: className.trim(),
+      examOrClass: examOrClass.trim(),
       subject: subject.trim(),
       chapter: chapter.trim(),
       difficulty,

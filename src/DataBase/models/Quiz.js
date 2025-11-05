@@ -20,7 +20,7 @@ function arrayMin4(val) {
 const QuizSchema = new Schema(
   {
     title: { type: String, required: true, trim: true },
-    className: { type: String, required: true, trim: true }, // e.g., "10th"
+    examOrClass: { type: String, required: true, trim: true }, // e.g., "10th"
     subject: { type: String, required: true, trim: true },   // e.g., "Physics"
     chapter: { type: String, required: true, trim: true },   // e.g., "Laws of Motion"
     difficulty: {
