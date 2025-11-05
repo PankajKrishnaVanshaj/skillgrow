@@ -1,63 +1,46 @@
+// @/DataBase/models/Quiz.js
 import mongoose, { Schema, models } from "mongoose";
 
-// Define enums for Difficulty and Format
 const Difficulty = {
   EASY: "Easy",
   MEDIUM: "Medium",
   HARD: "Hard",
 };
 
-// const Format = {
-//   MULTIPLE_CHOICE: "Multiple Choice",
-//   OPEN_ENDED: "Open-Ended",
-// };
-
-// Define the Question Schema
 const questionSchema = new Schema({
-  question: {
-    type: String,
-    required: true,
-  },
-  answer: {
-    type: String,
-    required: true,
-  },
-  options: {
-    type: [String],
-    required: true,
-    // required: function () {
-    //   return this.format === Format.MULTIPLE_CHOICE;
-    // },
-  },
+  question: { type: String, required: true },
+  options: { type: [String], required: true, validate: [arrayMin4, "Must have 4 options"] },
+  answer: { type: String, required: true },
 });
 
-// Define the Quiz Schema
+function arrayMin4(val) {
+  return val.length === 4;
+}
+
 const QuizSchema = new Schema(
   {
-    title: { type: String, required: true },
-    topic: { type: String, required: true },
+    title: { type: String, required: true, trim: true },
+    className: { type: String, required: true, trim: true }, // e.g., "10th"
+    subject: { type: String, required: true, trim: true },   // e.g., "Physics"
+    chapter: { type: String, required: true, trim: true },   // e.g., "Laws of Motion"
     difficulty: {
       type: String,
       enum: Object.values(Difficulty),
       required: true,
     },
-    // format: { type: String, enum: Object.values(Format), required: true },
+    language: { type: String, required: true, default: "English" },
     number: { type: Number, required: true, min: 1, max: 20 },
-    questions: {
-      type: [questionSchema],
-      required: true,
-    },
+    questions: { type: [questionSchema], required: true },
     createdBy: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Check if the model already exists, otherwise define it
-const QuizModel = models.Quiz || mongoose.model("Quiz", QuizSchema);
 
+
+const QuizModel = models.Quiz || mongoose.model("Quiz", QuizSchema);
 export default QuizModel;

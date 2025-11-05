@@ -10,26 +10,33 @@ async function connectDB() {
     await connectToDatabase();
   } catch (error) {
     console.error("Database connection error:", error.message);
-    throw new Error("Database connection error");
+    throw new Error("Database connection failed");
   }
 }
 
 export async function DELETE(req, { params }) {
   try {
     await connectDB();
-    const session = await getServerSession({ req, authOptions });
-    const { id } = params;
 
-    const createdBy = session?.user?.email;
-    if (!createdBy) {
+    // Get session with authOptions
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { success: false, error: "Missing createdBy parameter" },
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = params;
+    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid quiz ID" },
         { status: 400 }
       );
     }
 
-    // Find the user by email
-    const user = await UserModel.findOne({ email: createdBy });
+    // Find user by email
+    const user = await UserModel.findOne({ email: session.user.email }).select("_id");
     if (!user) {
       return NextResponse.json(
         { success: false, error: "User not found" },
@@ -37,20 +44,16 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    // Find the quiz by ID
-    const quiz = await QuizModel.findById(id);
+    // Find quiz
+    const quiz = await QuizModel.findOne({
+      _id: id,
+      createdBy: user._id,
+    });
+
     if (!quiz) {
       return NextResponse.json(
-        { success: false, error: "Quiz not found" },
+        { success: false, error: "Quiz not found or not authorized" },
         { status: 404 }
-      );
-    }
-
-    // Check if the user is the creator of the quiz
-    if (quiz.createdBy.toString() !== user._id.toString()) {
-      return NextResponse.json(
-        { success: false, error: "Not authorized to delete this quiz" },
-        { status: 403 }
       );
     }
 
@@ -62,9 +65,9 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error occurred:", error.message);
+    console.error("DELETE /api/quiz/[id] error:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: "Failed to delete quiz" },
       { status: 500 }
     );
   }

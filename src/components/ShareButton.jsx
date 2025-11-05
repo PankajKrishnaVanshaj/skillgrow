@@ -1,37 +1,60 @@
-import { Share2 } from "lucide-react";
+"use client";
+import { Share2, Check, Copy, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
-export const ShareButton = ({ url }) => {
-  const baseUrl = `${window.location.origin}/dashboard/quiz/${url}`;
+export const ShareButton = ({ url, title = "Check out my quiz on PK SkillGrow!" }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const baseUrl = typeof window !== "undefined" 
+    ? `${window.location.origin}/dashboard/quiz/${url}`
+    : "";
+
   const shareData = {
-    title:
-      "PK SkillGrow - Enhance Your Knowledge with AI-Driven Quizzes & Courses",
-    text: "PK SkillGrow is an AI-powered platform that helps users enhance their knowledge through interactive quizzes, personalized courses, and educational resources.",
+    title: "PK SkillGrow Quiz",
+    text: title,
     url: baseUrl,
   };
 
   const handleShare = async () => {
+    if (!baseUrl) return;
+
+    setIsLoading(true);
+
     try {
-      if (navigator.share) {
-        // Check for Web Share API support
+      // Native Web Share API (mobile browsers)
+      if (navigator.share && navigator.canShare?.(shareData)) {
         await navigator.share(shareData);
+       
       } else {
-        // Fallback for browsers without Web Share API
+        // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(baseUrl);
-        alert("Link copied to clipboard!");
+        
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred.";
-      console.error("Share failed:", errorMessage);
+      console.error("Share failed:", error);
+
+     
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <button
+    <Button
       onClick={handleShare}
-      className="text-black font-bold py-2 px-4 rounded-full shadow-md transition duration-300 hover:bg-slate-300"
+      disabled={isLoading || !baseUrl}
+      size="sm"
+      variant="outline"
+      className="flex items-center gap-2 hover:scale-105 transition-transform"
+      aria-label="Share this quiz"
     >
-      <Share2 size={22} />
-    </button>
+      {isLoading ? (
+        <div className="w-4 h-4 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+      ) : (
+        <Share2 className="w-4 h-4" />
+      )}
+      <span className="hidden sm:inline">Share</span>
+    </Button>
   );
 };

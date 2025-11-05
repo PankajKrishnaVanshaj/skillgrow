@@ -7,93 +7,42 @@ import { NextResponse } from "next/server";
 async function connectDB() {
   try {
     await connectToDatabase();
-    console.log("Database connection successful");
   } catch (error) {
     console.error("Database connection error:", error.message);
-    throw new Error("Database connection error");
+    throw new Error("Database connection failed");
   }
 }
 
+// GET: Fetch quiz by ID or all quizzes by user
 export async function GET(req) {
   try {
-    const session = await getServerSession({ req });
     await connectDB();
-
+    const session = await getServerSession({ req });
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (id) {
-      try {
-        const quiz = await QuizModel.findById(id);
-        if (!quiz) {
-          return NextResponse.json(
-            { success: false, error: "quiz not found" },
-            { status: 404 }
-          );
-        }
+      // Fetch single quiz
+      const quiz = await QuizModel.findById(id).lean();
+      if (!quiz) {
         return NextResponse.json(
-          { success: true, data: quiz },
-          { status: 200 }
-        );
-      } catch (error) {
-        console.error("Error fetching quiz details:", error);
-        return NextResponse.json(
-          { success: false, error: "Server Error" },
-          { status: 500 }
-        );
-      }
-    } else {
-      const createdBy = session?.user?.email;
-      if (!createdBy) {
-        return NextResponse.json(
-          { success: false, error: "Missing createdBy parameter" },
-          { status: 400 }
-        );
-      }
-
-      const user = await UserModel.findOne({ email: createdBy });
-
-      if (!user) {
-        return NextResponse.json(
-          { success: false, error: "User not found" },
+          { success: false, error: "Quiz not found" },
           { status: 404 }
         );
       }
-
-      const quizData = await QuizModel.find({
-        createdBy: user._id,
-      });
-
-      return NextResponse.json(
-        { success: true, data: quizData },
-        { status: 200 }
-      );
+      return NextResponse.json({ success: true, data: quiz }, { status: 200 });
     }
-  } catch (error) {
-    console.error("Error occurred:", error.message);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-}
 
-export async function POST(req) {
-  try {
-    await connectDB();
-    const session = await getServerSession({ req });
-
-    // Ensure a valid session and retrieve the user's email
-    const createdBy = session?.user?.email;
-    if (!createdBy) {
+    // Fetch all quizzes for logged-in user
+    const email = session?.user?.email;
+    if (!email) {
       return NextResponse.json(
-        { success: false, error: "Missing createdBy parameter" },
-        { status: 400 }
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
-    // Find the user by email
-    const user = await UserModel.findOne({ email: createdBy });
+    const user = await UserModel.findOne({ email }).select("_id");
     if (!user) {
       return NextResponse.json(
         { success: false, error: "User not found" },
@@ -101,48 +50,106 @@ export async function POST(req) {
       );
     }
 
-    // Extract quiz data from the request body
-    const { title, topic, difficulty, number, questions } = await req.json();
+    const quizzes = await QuizModel.find({ createdBy: user._id })
+      .sort({ createdAt: -1 })
+      .select("-questions") // Optional: reduce payload
+      .lean();
 
-    // Parse the questions to ensure they are in the correct format
-    let parsedQuestions;
-    try {
-      parsedQuestions = JSON.parse(questions);
-      if (!Array.isArray(parsedQuestions)) {
-        throw new Error("Questions must be provided as an array");
-      }
-    } catch (error) {
+    return NextResponse.json({ success: true, data: quizzes }, { status: 200 });
+  } catch (error) {
+    console.error("GET /api/quiz error:", error);
+    return NextResponse.json(
+      { success: false, error: "Server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Create new quiz
+export async function POST(req) {
+  try {
+    await connectDB();
+    const session = await getServerSession({ req });
+
+    const email = session?.user?.email;
+    if (!email) {
       return NextResponse.json(
-        { success: false, error: "Invalid questions format" },
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const user = await UserModel.findOne({ email }).select("_id");
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const body = await req.json();
+    const {
+      questions: questionsJson,
+      title: providedTitle,
+      className,
+      subject,
+      chapter,
+      difficulty,
+      language = "English",
+      number,
+    } = body;
+
+    // Validate required fields
+    if (!className || !subject || !chapter || !difficulty || !number || !questionsJson) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Construct the QuizData object
+    // Parse and validate questions
+    let parsedQuestions;
+    try {
+      parsedQuestions = JSON.parse(questionsJson);
+      if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
+        throw new Error("Questions must be a non-empty array");
+      }
+      if (parsedQuestions.length !== Number(number)) {
+        console.warn(`Warning: Expected ${number} questions, got ${parsedQuestions.length}`);
+      }
+    } catch (err) {
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON in questions" },
+        { status: 400 }
+      );
+    }
+
+    // Auto-generate title if not provided
+    const title = providedTitle?.trim() || `${subject} - ${chapter} (Class ${className})`;
+
     const quizData = {
       title,
-      topic,
+      className: className.trim(),
+      subject: subject.trim(),
+      chapter: chapter.trim(),
       difficulty,
-      number,
+      language,
+      number: Number(number),
       questions: parsedQuestions,
-      createdBy: user._id, // Assign the user's ObjectId to createdBy
+      createdBy: user._id,
     };
 
-    // Create a new QuizModel instance
     const newQuiz = new QuizModel(quizData);
-
-    // Save the quiz to the database
     const savedQuiz = await newQuiz.save();
 
-    // Return success response with the saved quiz data
     return NextResponse.json(
       { success: true, data: savedQuiz },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error occurred:", error.message);
+    console.error("POST /api/quiz error:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: error.message || "Failed to create quiz" },
       { status: 500 }
     );
   }

@@ -14,13 +14,7 @@ import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Define enums for Difficulty and Format
-const Difficulty = {
-  EASY: "Easy",
-  MEDIUM: "Medium",
-  HARD: "Hard",
-};
-
+const Difficulty = { EASY: "Easy", MEDIUM: "Medium", HARD: "Hard" };
 const Language = ["English", "Hindi"];
 
 const AddQuiz = () => {
@@ -28,8 +22,9 @@ const AddQuiz = () => {
 
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState("");
-  const [topic, setTopic] = useState("");
+  const [className, setClassName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [chapter, setChapter] = useState("");
   const [difficulty, setDifficulty] = useState(Difficulty.EASY);
   const [language, setLanguage] = useState("English");
   const [number, setNumber] = useState(5);
@@ -37,45 +32,71 @@ const AddQuiz = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-    let inputPrompt = `Please generate ${number} multiple-choice questions with a difficulty level of ${difficulty} in JSON format. The questions should be based on the topic "${topic}" and include the following fields: 'question', 'options', and 'answer'. The 'answer' should be one of the options provided. The text should be in ${language} and the questions should be relevant to the title "${title}".`;
+    // Auto-generate title
+    const title = `${subject} - ${chapter} (Class ${className})`;
+
+    // Optimized prompt: concise, structured, schema-enforced
+    const inputPrompt = `Generate exactly ${number} multiple-choice questions for Class ${className}, Subject: ${subject}, Chapter: ${chapter}. 
+Difficulty: ${difficulty}. Language: ${language}.
+
+Return valid JSON only (no markdown):
+[
+  {
+    "question": "string",
+    "options": ["option1", "option2", "option3", "option4"],
+    "answer": "correct_option_text"
+  }
+]
+
+Ensure:
+- Questions are educational and accurate.
+- Exactly 4 unique options.
+- Answer must match one option exactly.
+- No extra text or explanation.`;
 
     try {
-      setLoading(true);
-      setError(null);
-
       const result = await chatSession.sendMessage(inputPrompt);
-      const quizJsonResp = (await result.response.text())
-        .replace("```json", "")
-        .replace("```", "");
+      let rawText = await result.response.text();
 
-      if (quizJsonResp) {
-        const response = await axios.post("/api/quiz", {
-          questions: quizJsonResp,
-          title,
-          topic,
-          difficulty,
-          language,
-          number,
-        });
+      // Clean JSON
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error("Invalid JSON format from AI");
+      const quizJson = jsonMatch[0];
+      let questions;
+      try {
+        questions = JSON.parse(quizJson);
+      } catch (parseErr) {
+        throw new Error("Failed to parse AI response as JSON");
+      }
 
-        const data = response.data;
+      if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error("No valid questions generated");
+      }
 
-        if (data.success) {
-          setOpenDialog(false);
-          setLoading(false);
-          router.push("/dashboard/quiz/" + data.data._id);
-        } else {
-          console.log("ERROR:", data.error);
-          setError(data.error);
-        }
+      // Send to backend
+      const response = await axios.post("/api/quiz", {
+        questions: JSON.stringify(questions),
+        title,
+        className,
+        subject,
+        chapter,
+        difficulty,
+        language,
+        number,
+      });
+
+      if (response.data.success) {
+        setOpenDialog(false);
+        router.push(`/dashboard/quiz/${response.data.data._id}`);
       } else {
-        console.log("ERROR: No response from AI");
-        setError("No response from AI. Please try again.");
+        setError(response.data.error || "Failed to save quiz");
       }
     } catch (err) {
-      console.error("Error generating quiz:", err);
-      setError("Failed to generate quiz. Please try again.");
+      console.error("Quiz generation error:", err);
+      setError(err.message || "Failed to generate quiz. Try again.");
     } finally {
       setLoading(false);
     }
@@ -93,92 +114,134 @@ const AddQuiz = () => {
         className="p-10 border rounded-lg bg-secondary hover:scale-105 hover:shadow-md cursor-pointer transition-all border-dashed"
         onClick={() => setOpenDialog(true)}
       >
-        <h2 className="text-lg text-center">+ Add New</h2>
+        <h2 className="text-lg text-center">+ Add New Quiz</h2>
       </div>
+
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl">Create New Quiz</DialogTitle>
             <DialogDescription>
-              Quiz Details, You can choose how many questions you would like to
-              be quizzed on here.
+              Fill in the details to generate a custom quiz.
             </DialogDescription>
           </DialogHeader>
+
           <form onSubmit={onSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="class" className="block text-sm font-medium">
+                  Class
+                </label>
+                <Input
+                  id="class"
+                  placeholder="e.g., 10th"
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium">
+                  Subject
+                </label>
+                <Input
+                  id="subject"
+                  placeholder="e.g., Physics"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
             <div>
-              <label htmlFor="title" className="block text-sm font-medium">
-                Title
+              <label htmlFor="chapter" className="block text-sm font-medium">
+                Topic / Chapter
               </label>
               <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                id="chapter"
+                placeholder="e.g., Laws of Motion"
+                value={chapter}
+                onChange={(e) => setChapter(e.target.value)}
                 required
               />
             </div>
-            <div>
-              <label htmlFor="topic" className="block text-sm font-medium">
-                Topic
-              </label>
-              <Input
-                id="topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                required
-              />
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label
+                  htmlFor="difficulty"
+                  className="block text-sm font-medium"
+                >
+                  Difficulty
+                </label>
+                <select
+                  id="difficulty"
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={Difficulty.EASY}>Easy</option>
+                  <option value={Difficulty.MEDIUM}>Medium</option>
+                  <option value={Difficulty.HARD}>Hard</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="language" className="block text-sm font-medium">
+                  Language
+                </label>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  {Language.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="number" className="block text-sm font-medium">
+                  Questions
+                </label>
+                <Input
+                  id="number"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={number}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    if (val >= 1 && val <= 20) setNumber(val);
+                  }}
+                  required
+                />
+              </div>
             </div>
-            <div className="flex justify-between gap-5 items-center">
-              <select
-                id="difficulty"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              >
-                <option value={Difficulty.EASY}>Easy</option>
-                <option value={Difficulty.MEDIUM}>Medium</option>
-                <option value={Difficulty.HARD}>Hard</option>
-              </select>
 
-              <select
-                id="language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              >
-                {Language.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {lang}
-                  </option>
-                ))}
-              </select>
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
-              <Input
-                id="number"
-                type="number"
-                value={number}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  if (newValue <= 20) {
-                    setNumber(newValue);
-                  }
-                }}
-                required
-                min={1}
-                max={20}
-                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <LoaderCircle className="animate-spin" />
+                  <>
+                    <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
                 ) : (
                   "Create Quiz"
                 )}
               </Button>
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
           </form>
         </DialogContent>
       </Dialog>

@@ -1,92 +1,155 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
-import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { UserIcon } from "lucide-react";
+import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { User, LogOut, Menu, X, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Header = () => {
-  const pathname = usePathname();
-  const { status, data } = useSession();
-  const [infoVisible, setInfoVisible] = useState(false);
+  const { data: session, status } = useSession();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false }); // sign out without redirect
-    setInfoVisible(false); // close the user info modal if open
-    window.location.href = "/"; // redirect manually to the homepage
+    await signOut({ redirect: false });
+    window.location.href = "/";
   };
 
   return (
-    <header className="flex flex-col md:flex-row py-1 px-5 md:px-10 items-center justify-between bg-secondary shadow-md rounded-full mx-3 md:mx-10 my-2 transition-all duration-500 ease-in-out transform hover:scale-105">
-      <Link href={"/"}>
-        <div className="flex justify-center items-center gap-2">
-          <Image
-            src={"/skillgrow.png"}
-            alt="logo"
-            width={50}
-            height={50}
-            // className="rounded-full"
-          />
-          <span
-            className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-br from-orange-500 via-blue-400 to-red-600"
-            style={{
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative">
+            <Image
+              src="/skillgrow.png"
+              alt="PK SkillGrow Logo"
+              width={48}
+              height={48}
+              className="rounded-full shadow-md transition-transform group-hover:scale-110"
+            />
+            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 animate-pulse" />
+          </div>
+          <span className="hidden sm:block font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-purple-600 to-blue-600">
             PK SkillGrow
           </span>
-        </div>
-      </Link>
+        </Link>
 
-      {/* authentication */}
-      <div className="flex items-center gap-5">
-        {status === "authenticated" ? (
-          <>
-            <Image
-              className="rounded-full w-10 h-10 cursor-pointer"
-              src={data?.user?.image}
-              alt="User avatar"
-              width={60}
-              height={60}
-              onClick={() => setInfoVisible(!infoVisible)}
-            />
-            {infoVisible && (
-              <div className="absolute bg-white dark:bg-neutral-700 p-6 rounded-md shadow-lg top-20 right-5">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-                  User Information
-                </h2>
-                <ul className="space-y-2">
-                  <li className="text-lg text-gray-600 dark:text-gray-300">
-                    {data?.user?.name}
-                  </li>
-                  <li className="text-gray-600 dark:text-gray-300">
-                    {data?.user?.email}
-                  </li>
-                  <li>
-                    <button
-                      onClick={handleSignOut}
-                      className="bg-gray-800 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50 transition duration-300 ease-in-out"
+        {/* Right Side: Auth */}
+        <div className="flex items-center gap-3">
+          {status === "authenticated" ? (
+            <>
+              {/* Desktop Dropdown */}
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="relative h-10 w-10 rounded-full p-0"
                     >
+                      <Image
+                        src={session.user?.image || "/default-avatar.png"}
+                        alt="User avatar"
+                        width={40}
+                        height={40}
+                        className="rounded-full"
+                      />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">
+                          {session.user?.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {session.user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="text-red-600"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
                       Sign Out
-                    </button>
-                  </li>
-                </ul>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            )}
-          </>
-        ) : (
-          <nav>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-x-2 font-medium text-gray-500 hover:text-purple-600 dark:text-neutral-400 dark:hover:text-purple-500"
-            >
-              <UserIcon className="w-4 h-4" />
-              Get Started
-            </Link>
-          </nav>
-        )}
+
+              {/* Mobile Sheet */}
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-64">
+                  <div className="flex flex-col space-y-6 mt-6">
+                    <div className="flex items-center gap-3">
+                      <Image
+                        src={session.user?.image || "/default-avatar.png"}
+                        alt="User"
+                        width={48}
+                        height={48}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <p className="font-semibold">{session.user?.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {session.user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Button
+                        variant="ghost"
+                        asChild
+                        className="w-full justify-start"
+                      >
+                        <Link href="/dashboard">
+                          <User className="mr-2 h-4 w-4" /> Dashboard
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={handleSignOut}
+                        className="w-full justify-start text-red-600"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          ) : (
+            <Button asChild size="sm">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Get Started
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );
